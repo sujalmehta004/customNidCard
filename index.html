@@ -56,10 +56,8 @@
     </style>
   </head>
   <body class="bg-gray-100 min-h-screen pb-12">
-    <!-- Hidden bridge container required to solve the blank-canvas printing bug safely -->
     <div id="printBridgeZone" class="hidden"></div>
 
-    <!-- Top Navigation Header -->
     <header class="bg-[#111827] text-white shadow-md p-4 sticky top-0 z-50">
       <div
         class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4"
@@ -93,7 +91,6 @@
       </div>
     </header>
 
-    <!-- Admin Screen Overlay Configuration Block -->
     <div
       id="adminPanelModal"
       class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
@@ -145,7 +142,6 @@
       </div>
     </div>
 
-    <!-- Lockdown Informational Notice Container -->
     <div
       id="lockdownNotice"
       class="hidden max-w-xl mx-auto mt-20 p-8 bg-white rounded-xl shadow-md border border-gray-200 text-center"
@@ -155,21 +151,23 @@
         IP Verification Failed
       </h2>
       <p class="text-sm text-gray-500 mt-2">
-        This machine is not authorized to use the generator.
+        This machine is not authorized or no administrator setup has been
+        initialized.
+      </p>
+      <p class="text-xs text-gray-400 mt-2">
+        Please log into the <b>Admin Panel</b> using the top button to register
+        your current station IP address.
       </p>
     </div>
 
-    <!-- Core App Main Interface Workspace Grid Layout -->
     <main
       id="appWorkspace"
       class="max-w-7xl mx-auto mt-8 px-4 grid grid-cols-1 lg:grid-cols-12 gap-8"
     >
-      <!-- Left Control Column Form Tabs (5 Cols) -->
       <div
         class="lg:col-span-5 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col justify-between"
       >
         <div>
-          <!-- Tabs Navigation -->
           <div class="flex border-b bg-gray-50">
             <button
               id="tab1-btn"
@@ -185,9 +183,7 @@
             </button>
           </div>
 
-          <!-- Fields Body -->
           <div class="p-6">
-            <!-- Tab 1: Configuration Fields -->
             <div id="tab1-content" class="space-y-4">
               <div>
                 <label
@@ -300,9 +296,7 @@
               </div>
             </div>
 
-            <!-- Tab 2: Cosmetics Config -->
             <div id="tab2-content" class="space-y-4 hidden">
-              <!-- Colored Version Checkbox Toggle -->
               <div
                 class="p-3 bg-blue-50 rounded-lg border border-blue-200 flex items-center justify-between"
               >
@@ -380,7 +374,6 @@
           </div>
         </div>
 
-        <!-- Apply Actions Footer Row -->
         <div class="bg-gray-50 p-4 border-t border-gray-200">
           <button
             id="btnGenerate"
@@ -391,7 +384,6 @@
         </div>
       </div>
 
-      <!-- Right Output Workspace Column (7 Cols) -->
       <div class="lg:col-span-7 flex flex-col items-center">
         <div
           class="w-full bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-4 flex flex-col sm:flex-row justify-between items-center gap-3"
@@ -418,7 +410,6 @@
           </div>
         </div>
 
-        <!-- Visual Scaled Viewer Canvas Container Box -->
         <div
           class="w-full overflow-auto bg-gray-100 rounded-xl p-6 flex justify-center items-center border border-dashed border-gray-300 min-h-[380px]"
         >
@@ -505,11 +496,15 @@
 
       function checkWorkspaceAuthorization() {
         const allowedIpConfig = localStorage.getItem("nid_admin_ip_auth");
-        if (!allowedIpConfig) {
-          appWorkspace.classList.remove("hidden");
-          lockdownNotice.classList.add("hidden");
+
+        // CRITICAL FIX: If no IP has been registered, access is immediately blocked.
+        if (!allowedIpConfig || allowedIpConfig.trim() === "") {
+          appWorkspace.classList.add("hidden");
+          lockdownNotice.classList.remove("hidden");
           return;
         }
+
+        // Verify strict match condition against current client device IP
         if (currentMachineIp === allowedIpConfig.trim()) {
           appWorkspace.classList.remove("hidden");
           lockdownNotice.classList.add("hidden");
@@ -567,11 +562,10 @@
       }
       btnRemovePhoto.addEventListener("click", executePhotoRemoval);
 
-      // Background Pattern/Image Removal Action Input Trigger with LocalStorage Clear
       btnRemoveBgImage.addEventListener("click", () => {
         inputBgImage.value = "";
         cardBgImg = null;
-        localStorage.removeItem("nid_remembered_bg_pattern"); // Forget background path completely
+        localStorage.removeItem("nid_remembered_bg_pattern");
         renderCardLayout();
         alert(
           "Background pattern completely removed and forgotten from memory!",
@@ -620,7 +614,6 @@
           const reader = new FileReader();
           reader.onload = function (event) {
             const base64Data = event.target.result;
-            // Automatically save background data stream directly into local memory space
             localStorage.setItem("nid_remembered_bg_pattern", base64Data);
 
             cardBgImg = new Image();
@@ -656,7 +649,6 @@
           if (isColorMode) {
             ctx.drawImage(cardBgImg, 0, 0, canvas.width, canvas.height);
           } else {
-            // Normal version: Draw background image as high contrast grayscale
             ctx.save();
             ctx.drawImage(cardBgImg, 0, 0, canvas.width, canvas.height);
             const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -664,15 +656,15 @@
             for (let i = 0; i < data.length; i += 4) {
               const brightness =
                 0.34 * data[i] + 0.5 * data[i + 1] + 0.16 * data[i + 2];
-              data[i] = brightness; // Red
-              data[i + 1] = brightness; // Green
-              data[i + 2] = brightness; // Blue
+              data[i] = brightness;
+              data[i + 1] = brightness;
+              data[i + 2] = brightness;
             }
             ctx.putImageData(imgData, 0, 0);
             ctx.restore();
           }
         } else {
-          ctx.fillStyle = isColorMode ? inputBgColor.value : "#f9fafb"; // Fallback to safe neutral layout color
+          ctx.fillStyle = isColorMode ? inputBgColor.value : "#f9fafb";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
@@ -737,7 +729,6 @@
           currentY += lineSpacer;
         });
 
-        // Optional 1px Black Border Rule Logic
         if (checkOuterBorder.checked) {
           ctx.strokeStyle = "#000000";
           ctx.lineWidth = 2;
